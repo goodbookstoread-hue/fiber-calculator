@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fiber Tracker — Daily Fiber Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Tokens ── */
+    :root {
+      --sage:       #4a7c59;
+      --sage-light: #e8f0eb;
+      --sage-mid:   #b5cebe;
+      --cream:      #faf8f4;
+      --ink:        #1c2420;
+      --ink-soft:   #4a5550;
+      --rule:       #d0dbd4;
+      --amber:      #c97b2a;
+      --white:      #ffffff;
+      --radius-sm:  6px;
+      --radius-md:  12px;
+      --radius-lg:  18px;
+      --mono: 'DM Mono', monospace;
+      --sans: 'DM Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--cream);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      max-width: 560px;
+    }
+
+    .logo-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      background: var(--sage);
+      border-radius: 14px;
+      margin-bottom: 1rem;
+    }
+
+    .logo-mark svg { display: block; }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+
+    h1 span { color: var(--sage); }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      width: 100%;
+      max-width: 580px;
+      box-shadow: 0 2px 12px rgba(74,124,89,0.06);
+    }
+
+    /* ── Input area ── */
+    label.field-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin-bottom: 0.5rem;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      resize: vertical;
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-md);
+      padding: 0.875rem 1rem;
+      font-family: var(--sans);
+      font-size: 0.975rem;
+      color: var(--ink);
+      background: var(--cream);
+      line-height: 1.55;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+    }
+
+    textarea::placeholder { color: var(--sage-mid); }
+
+    textarea:focus {
+      border-color: var(--sage);
+      box-shadow: 0 0 0 3px rgba(74,124,89,0.12);
+      background: var(--white);
+    }
+
+    .examples {
+      margin-top: 0.5rem;
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+    }
+
+    .examples strong { color: var(--ink); font-weight: 500; }
+
+    /* ── Button ── */
+    button#analyze-btn {
+      margin-top: 1.25rem;
+      width: 100%;
+      background: var(--sage);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 0.875rem 1.5rem;
+      font-family: var(--sans);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    button#analyze-btn:hover { background: #3d6a4b; }
+    button#analyze-btn:active { transform: scale(0.98); }
+    button#analyze-btn:disabled { background: var(--sage-mid); cursor: not-allowed; transform: none; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.35);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .loading .spinner { display: block; }
+    .loading .btn-text::after { content: "Calculating…"; }
+    .btn-text::after { content: "Analyze Fiber"; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error ── */
+    .error-box {
+      margin-top: 1.25rem;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      color: #b91c1c;
+      display: none;
+    }
+    .error-box.visible { display: block; }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 1.75rem 0;
+    }
+
+    /* ── Nutrition Label Panel (signature element) ── */
+    #results { display: none; }
+    #results.visible { display: block; }
+
+    .panel-header {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 0.875rem;
+    }
+
+    .nutrition-panel {
+      border: 2px solid var(--ink);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      font-family: var(--mono);
+    }
+
+    .panel-title-bar {
+      background: var(--ink);
+      color: var(--white);
+      padding: 0.6rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+    }
+
+    .panel-title-bar .label { font-weight: 500; text-transform: uppercase; }
+    .panel-title-bar .col-header { opacity: 0.65; }
+
+    .food-rows { padding: 0.25rem 0; }
+
+    .food-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid var(--rule);
+      gap: 1rem;
+      animation: fadeIn 0.25s ease both;
+    }
+
+    .food-row:last-child { border-bottom: none; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .food-name {
+      font-size: 0.875rem;
+      color: var(--ink);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .food-note {
+      font-size: 0.7rem;
+      color: var(--ink-soft);
+      margin-top: 0.15rem;
+    }
+
+    .food-fiber {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--sage);
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .food-fiber.zero { color: var(--sage-mid); }
+
+    /* Total row */
+    .total-row {
+      background: var(--sage-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      border-top: 3px solid var(--ink);
+    }
+
+    .total-label {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink);
+    }
+
+    .total-value {
+      font-family: var(--mono);
+      font-size: 1.35rem;
+      font-weight: 500;
+      color: var(--sage);
+    }
+
+    .total-value .unit {
+      font-size: 0.75rem;
+      color: var(--ink-soft);
+      margin-left: 0.15rem;
+    }
+
+    /* Daily reference bar */
+    .dv-section {
+      margin-top: 1rem;
+    }
+
+    .dv-label {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      margin-bottom: 0.4rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .dv-label span { color: var(--sage); font-weight: 500; }
+
+    .dv-bar-track {
+      height: 8px;
+      background: var(--sage-light);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .dv-bar-fill {
+      height: 100%;
+      background: var(--sage);
+      border-radius: 99px;
+      transition: width 0.6s cubic-bezier(.4,0,.2,1);
+      max-width: 100%;
+    }
+
+    .dv-bar-fill.over { background: var(--amber); }
+
+    /* Disclaimer */
+    .disclaimer {
+      margin-top: 1.25rem;
+      font-size: 0.75rem;
+      color: var(--ink-soft);
+      line-height: 1.5;
+      padding: 0.625rem 0.875rem;
+      background: var(--sage-light);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--sage-mid);
+    }
+
+    .disclaimer strong { color: var(--ink); font-weight: 500; }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 2.5rem;
+      font-size: 0.75rem;
+      color: var(--sage-mid);
+      text-align: center;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      h1 { font-size: 1.4rem; }
+      .card { padding: 1.25rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .food-row { animation: none; }
+      .dv-bar-fill { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-mark" aria-hidden="true">
+      <!-- Wheat/plant icon -->
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 24V10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <ellipse cx="14" cy="8" rx="4" ry="2.5" fill="white" opacity="0.9"/>
+        <ellipse cx="10" cy="12" rx="3.5" ry="2" fill="white" opacity="0.75" transform="rotate(-30 10 12)"/>
+        <ellipse cx="18" cy="12" rx="3.5" ry="2" fill="white" opacity="0.75" transform="rotate(30 18 12)"/>
+        <ellipse cx="11" cy="16.5" rx="3" ry="1.8" fill="white" opacity="0.6" transform="rotate(-25 11 16.5)"/>
+        <ellipse cx="17" cy="16.5" rx="3" ry="1.8" fill="white" opacity="0.6" transform="rotate(25 17 16.5)"/>
+      </svg>
+    </div>
+    <h1>Daily <span>Fiber</span> Calculator</h1>
+    <p class="subtitle">Describe what you ate today — get an instant fiber breakdown.</p>
+  </header>
+
+  <div class="card">
+    <label class="field-label" for="meals-input">Today's meals</label>
+    <textarea
+      id="meals-input"
+      placeholder="e.g. a glazed donut, 4oz fruit yogurt, a banana, and 8oz of apple juice"
+      aria-label="Describe your meals"
+      spellcheck="true"
+    ></textarea>
+    <p class="examples">
+      <strong>Try:</strong> "oatmeal with blueberries and coffee for breakfast, turkey sandwich on whole wheat for lunch, grilled chicken with broccoli and brown rice for dinner"
+    </p>
+
+    <button id="analyze-btn" type="button" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <span class="btn-text"></span>
+    </button>
+
+    <div id="error-box" class="error-box" role="alert" aria-live="assertive"></div>
+
+    <div id="results" aria-live="polite">
+      <hr class="divider" />
+      <p class="panel-header">Fiber Breakdown</p>
+
+      <div class="nutrition-panel" role="table" aria-label="Fiber content per food item">
+        <div class="panel-title-bar" role="row">
+          <span class="label">Food item</span>
+          <span class="col-header">Fiber (g)</span>
+        </div>
+        <div class="food-rows" id="food-rows" role="rowgroup"></div>
+        <div class="total-row" role="row">
+          <span class="total-label">Daily Total</span>
+          <span class="total-value" id="total-value">
+            <span id="total-number">—</span><span class="unit">g</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="dv-section">
+        <div class="dv-label">
+          Daily Value reference (28g for 2,000 cal diet) — <span id="dv-pct">0%</span>
+        </div>
+        <div class="dv-bar-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="dv-bar-track">
+          <div class="dv-bar-fill" id="dv-bar" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="disclaimer" id="disclaimer-box">
+        <strong>Note:</strong> These are estimates based on typical nutritional values. Actual fiber content may vary by brand, ripeness, preparation method, and portion size.
+      </div>
+    </div>
+  </div>
+
+  <footer>Estimates only · Not medical or dietary advice</footer>
+
+  <script>
+    const btn = document.getElementById("analyze-btn");
+    const textarea = document.getElementById("meals-input");
+    const errorBox = document.getElementById("error-box");
+    const results = document.getElementById("results");
+    const foodRows = document.getElementById("food-rows");
+    const totalNumber = document.getElementById("total-number");
+    const dvPct = document.getElementById("dv-pct");
+    const dvBar = document.getElementById("dv-bar");
+    const dvBarTrack = document.getElementById("dv-bar-track");
+    const disclaimerBox = document.getElementById("disclaimer-box");
+
+    const DAILY_VALUE_G = 28;
+
+    function setLoading(loading) {
+      btn.disabled = loading;
+      btn.classList.toggle("loading", loading);
+    }
+
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.classList.add("visible");
+    }
+
+    function clearError() {
+      errorBox.textContent = "";
+      errorBox.classList.remove("visible");
+    }
+
+    function renderResults(data) {
+      // Clear old rows
+      foodRows.innerHTML = "";
+
+      data.items.forEach((item, i) => {
+        const row = document.createElement("div");
+        row.className = "food-row";
+        row.setAttribute("role", "row");
+        row.style.animationDelay = `${i * 0.04}s`;
+
+        const isZero = item.fiber_g === 0;
+        row.innerHTML = `
+          <div class="food-name" role="cell">
+            ${escHtml(item.food)}
+            ${item.note ? `<div class="food-note">${escHtml(item.note)}</div>` : ""}
+          </div>
+          <div class="food-fiber ${isZero ? "zero" : ""}" role="cell">
+            ${isZero ? "< 0.1" : item.fiber_g.toFixed(1)}
+          </div>
+        `;
+        foodRows.appendChild(row);
+      });
+
+      totalNumber.textContent = data.total_g.toFixed(1);
+
+      const pct = Math.round((data.total_g / DAILY_VALUE_G) * 100);
+      dvPct.textContent = `${pct}%`;
+      const fillPct = Math.min(pct, 100);
+      dvBar.style.width = fillPct + "%";
+      dvBar.classList.toggle("over", pct > 100);
+      dvBarTrack.setAttribute("aria-valuenow", fillPct);
+
+      if (data.disclaimer) {
+        disclaimerBox.innerHTML = `<strong>Note:</strong> ${escHtml(data.disclaimer)}`;
+      }
+
+      results.classList.add("visible");
+    }
+
+    function escHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    btn.addEventListener("click", async () => {
+      const meals = textarea.value.trim();
+      if (!meals) {
+        showError("Please describe your meals before analyzing.");
+        textarea.focus();
+        return;
+      }
+      clearError();
+      setLoading(true);
+      results.classList.remove("visible");
+
+      try {
+        const resp = await fetch("/api/fiber", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ meals }),
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          showError(data.error || "Something went wrong. Please try again.");
+          return;
+        }
+
+        if (!data.items || !Array.isArray(data.items)) {
+          showError("Unexpected response format. Please try rephrasing your meals.");
+          return;
+        }
+
+        renderResults(data);
+      } catch (err) {
+        showError("Network error — please check your connection and try again.");
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // Allow Ctrl+Enter / Cmd+Enter to submit
+    textarea.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        btn.click();
+      }
+    });
+  </script>
+</body>
+</html>
