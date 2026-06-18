@@ -1,9 +1,14 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/fiber.js", "use": "@vercel/node" }
+    { "src": "api/fiber.js", "use": "@vercel/node" },
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "*.js", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/api/fiber", "dest": "/api/fiber.js" }
+    { "src": "/api/fiber", "dest": "/api/fiber.js" },
+    { "src": "/login.html", "dest": "/login.html" },
+    { "src": "/supabase-config.js", "dest": "/supabase-config.js" },
+    { "src": "/", "dest": "/index.html" }
   ]
 }
