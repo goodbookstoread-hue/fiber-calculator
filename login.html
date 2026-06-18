@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fiber Tracker - Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 400px; margin: 80px auto; padding: 20px; }
+    h1 { text-align: center; color: #2d6a4f; }
+    input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    button { width: 100%; padding: 10px; margin-top: 10px; background: #2d6a4f; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #1b4332; }
+    .toggle { text-align: center; margin-top: 15px; color: #555; cursor: pointer; text-decoration: underline; }
+    .message { text-align: center; margin-top: 10px; color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <h1>Fiber Tracker</h1>
+  <div id="formTitle" style="text-align:center; font-weight:bold;">Log In</div>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <button id="actionButton" onclick="handleAuth()">Log In</button>
+  <div class="toggle" onclick="toggleMode()">Don't have an account? Sign up</div>
+  <div class="message" id="message"></div>
+
+  <script>
+    let isSignup = false;
+
+    function toggleMode() {
+      isSignup = !isSignup;
+      document.getElementById('formTitle').textContent = isSignup ? 'Sign Up' : 'Log In';
+      document.getElementById('actionButton').textContent = isSignup ? 'Sign Up' : 'Log In';
+      document.querySelector('.toggle').textContent = isSignup ? 'Already have an account? Log in' : "Don't have an account? Sign up";
+      document.getElementById('message').textContent = '';
+    }
+
+    async function handleAuth() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = '';
+
+      if (!email || !password) {
+        messageEl.textContent = 'Please enter both email and password.';
+        return;
+      }
+
+      try {
+        let result;
+        if (isSignup) {
+          result = await supabaseClient.auth.signUp({ email, password });
+        } else {
+          result = await supabaseClient.auth.signInWithPassword({ email, password });
+        }
+
+        if (result.error) {
+          messageEl.textContent = result.error.message;
+          return;
+        }
+
+        if (isSignup) {
+          messageEl.style.color = '#2d6a4f';
+          messageEl.textContent = 'Account created! Check your email to confirm, then log in.';
+        } else {
+          window.location.href = 'index.html';
+        }
+      } catch (err) {
+        messageEl.textContent = 'Something went wrong. Please try again.';
+      }
+    }
+  </script>
+</body>
+</html>
