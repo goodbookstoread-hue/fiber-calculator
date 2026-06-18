@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fiber Tracker - Login</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
   <style>
     body { font-family: Arial, sans-serif; max-width: 400px; margin: 80px auto; padding: 20px; }
     h1 { text-align: center; color: #2d6a4f; }
@@ -26,6 +25,9 @@
   <div class="message" id="message"></div>
 
   <script>
+    const SUPABASE_URL = 'https://wytulhgmvaeqnkvvhzxq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5dHVsaGdtdmFlcW5rdnZoenhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTA5MjgsImV4cCI6MjA5NzM2NjkyOH0.s-to8DfmqkZKDWU5hnNkJYiR-nZiBeX7-G-b2kWwKds';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let isSignup = false;
 
     function toggleMode() {
