@@ -562,13 +562,25 @@ async function logOut(){
           return;
         }
 
-        renderResults(data);
+       renderResults(data);
+        saveFoodLog(data);
       } catch (err) {
         showError("Network error — please check your connection and try again.");
       } finally {
         setLoading(false);
       }
     });
+
+    async function saveFoodLog(data) {
+      if (!currentUser) return;
+      for (const item of data.items) {
+        await supabaseClient.from('food_logs').insert({
+          user_id: currentUser.id,
+          food_description: item.food,
+          fiber_grams: item.fiber_g
+        });
+      }
+    }
 
     // Allow Ctrl+Enter / Cmd+Enter to submit
     textarea.addEventListener("keydown", (e) => {
