@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiber Tracker - History</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{font-family:Arial,sans-serif;max-width:600px;margin:40px auto;padding:20px;}
+h1{color:#2d6a4f;}
+.day-group{margin-bottom:24px;border:1px solid #ddd;border-radius:8px;padding:14px;}
+.day-header{font-weight:bold;color:#2d6a4f;margin-bottom:8px;display:flex;justify-content:space-between;}
+.food-item{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:14px;}
+.day-total{font-weight:bold;margin-top:8px;text-align:right;color:#2d6a4f;}
+.nav{margin-bottom:20px;}
+.nav a{color:#2d6a4f;text-decoration:none;margin-right:16px;}
+.empty{color:#888;text-align:center;margin-top:40px;}
+</style>
+</head>
+<body>
+<div class="nav"><a href="index.html">← Back to Tracker</a></div>
+<h1>Your Fiber History</h1>
+<div id="historyContainer"><p class="empty">Loading...</p></div>
+
+<script>
+var SB_URL = 'https:' + '//wytulhgmvaeqnkvvhzxq.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5dHVsaGdtdmFlcW5rdnZoenhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTA5MjgsImV4cCI6MjA5NzM2NjkyOH0.s-to8DfmqkZKDWU5hnNkJYiR-nZiBeX7-G-b2kWwKds';
+var supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
+
+async function loadHistory(){
+  var userResult = await supabaseClient.auth.getUser();
+  if(!userResult.data.user){
+    window.location.href = 'login.html';
+    return;
+  }
+  var userId = userResult.data.user.id;
+
+  var logsResult = await supabaseClient
+    .from('food_logs')
+    .select('*')
+    .eq('user_id', userId)
+    .order('logged_at', { ascending: false });
+
+  var container = document.getElementById('historyContainer');
+
+  if(logsResult.error){
+    container.innerHTML = '<p class="empty">Error loading history.</p>';
+    return;
+  }
+
+  var logs = logsResult.data;
+  if(!logs || logs.length === 0){
+    container.innerHTML = '<p class="empty">No food logged yet. Go log some meals!</p>';
+    return;
+  }
+
+  var grouped = {};
+  logs.forEach(function(entry){
+    var day = new Date(entry.logged_at).toLocaleDateString();
+    if(!grouped[day]) grouped[day] = [];
+    grouped[day].push(entry);
+  });
+
+  var html = '';
+  Object.keys(grouped).forEach(function(day){
+    var entries = grouped[day];
+    var total = 0;
+    var itemsHtml = '';
+    entries.forEach(function(e){
+      total += parseFloat(e.fiber_grams) || 0;
+      itemsHtml += '<div class="food-item"><span>' + e.food_description + '</span><span>' + parseFloat(e.fiber_grams).toFixed(1) + 'g</span></div>';
+    });
+    html += '<div class="day-group"><div class="day-header"><span>' + day + '</span></div>' + itemsHtml + '<div class="day-total">Total: ' + total.toFixed(1) + 'g fiber</div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+loadHistory();
+</script>
+</body>
+</html>
