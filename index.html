@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fiber Tracker — Daily Fiber Calculator</title>
@@ -362,6 +363,9 @@
   </style>
 </head>
 <body>
+  <div style="text-align:right;padding:10px;">
+  <button onclick="logOut()" style="background:#b91c1c;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Log Out</button>
+</div>
 
   <header>
     <div class="logo-mark" aria-hidden="true">
@@ -434,6 +438,25 @@
   <footer>Estimates only · Not medical or dietary advice</footer>
 
   <script>
+    var SB_URL = 'https:' + '//wytulhgmvaeqnkvvhzxq.supabase.co';
+    var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5dHVsaGdtdmFlcW5rdnZoenhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTA5MjgsImV4cCI6MjA5NzM2NjkyOH0.s-to8DfmqkZKDWU5hnNkJYiR-nZiBeX7-G-b2kWwKds';
+    var supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
+    var currentUser = null;
+
+async function checkLogin(){
+  var result = await supabaseClient.auth.getUser();
+  if(!result.data.user){
+    window.location.href = 'login.html';
+  } else {
+    currentUser = result.data.user;
+  }
+}
+checkLogin();
+
+async function logOut(){
+  await supabaseClient.auth.signOut();
+  window.location.href = 'login.html';
+}
     const btn = document.getElementById("analyze-btn");
     const textarea = document.getElementById("meals-input");
     const errorBox = document.getElementById("error-box");
