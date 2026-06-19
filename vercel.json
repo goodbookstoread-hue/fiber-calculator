@@ -7,6 +7,7 @@
   "routes": [
     { "src": "/api/fiber", "dest": "/api/fiber.js" },
     { "src": "/login.html", "dest": "/login.html" },
+    { "src": "/history.html", "dest": "/history.html" },
     { "src": "/", "dest": "/index.html" }
   ]
 }
