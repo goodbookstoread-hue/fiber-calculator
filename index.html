@@ -363,10 +363,13 @@
   </style>
 </head>
 <body>
- <div style="text-align:right;padding:10px;">
- <a href="history.html" style="margin-right:12px;color:#2d6a4f;text-decoration:none;font-weight:bold;">📊 History</a>
- <button onclick="logOut()" style="background:#b91c1c;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Log Out</button>
- </div>
+ <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;">
+<span id="welcomeMsg" style="font-weight:bold;color:#2d6a4f;"></span>
+<div>
+<a href="history.html" style="margin-right:12px;color:#2d6a4f;text-decoration:none;font-weight:bold;">📊 History</a>
+<button onclick="logOut()" style="background:#b91c1c;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Log Out</button>
+</div>
+</div>
 
   <header>
     <div class="logo-mark" aria-hidden="true">
@@ -450,6 +453,9 @@ async function checkLogin(){
     window.location.href = 'login.html';
   } else {
     currentUser = result.data.user;
+    var profileResult = await supabaseClient.from('profiles').select('full_name').eq('id', currentUser.id).single();
+    var name = (profileResult.data && profileResult.data.full_name) || 'there';
+    document.getElementById('welcomeMsg').textContent = 'Welcome, ' + name + '!';
   }
 }
 checkLogin();
