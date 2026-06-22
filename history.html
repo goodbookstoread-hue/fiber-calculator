@@ -19,7 +19,7 @@ h1{color:#2d6a4f;}
 </head>
 <body>
 <div class="nav"><a href="index.html">← Back to Tracker</a></div>
-<h1>Your Fiber History</h1>
+<h1 id="historyTitle">Your Fiber History</h1>
 <div id="historyContainer"><p class="empty">Loading...</p></div>
 
 <script>
@@ -34,6 +34,12 @@ async function loadHistory(){
     return;
   }
   var userId = userResult.data.user.id;
+
+  var profileResult = await supabaseClient.from('profiles').select('full_name').eq('id', userId).single();
+  var name = (profileResult.data && profileResult.data.full_name) || null;
+  if(name){
+    document.getElementById('historyTitle').textContent = name + "'s Fiber History";
+  }
 
   var logsResult = await supabaseClient
     .from('food_logs')
