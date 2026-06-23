@@ -2,10 +2,12 @@
   "version": 2,
   "builds": [
     { "src": "api/fiber.js", "use": "@vercel/node" },
+    { "src": "api/suggestions.js", "use": "@vercel/node" },
     { "src": "*.html", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/api/fiber", "dest": "/api/fiber.js" },
+    { "src": "/api/suggestions", "dest": "/api/suggestions.js" },
     { "src": "/login.html", "dest": "/login.html" },
     { "src": "/history.html", "dest": "/history.html" },
     { "src": "/", "dest": "/index.html" }
