@@ -653,6 +653,7 @@ async function logOut(){
 
        renderResults(data);
         saveFoodLog(data);
+        setTimeout(loadTodayProgress, 500);
       } catch (err) {
         showError("Network error — please check your connection and try again.");
       } finally {
