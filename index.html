@@ -547,7 +547,9 @@ async function saveGoal(){
   await supabaseClient.from('profiles').update({ daily_fiber_goal: goalValue }).eq('id', currentUser.id);
   DAILY_VALUE_G = goalValue;
   document.getElementById('goalDisplay').textContent = 'Daily Fiber Goal: ' + goalValue + 'g';
+  document.getElementById('dv-goal-label').textContent = getGoalLabel(goalValue);
   document.getElementById('goalEditor').style.display = 'none';
+  loadTodayProgress();
 }
 
 async function logOut(){
