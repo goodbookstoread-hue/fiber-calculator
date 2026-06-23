@@ -460,102 +460,12 @@
 
   <footer>Estimates only · Not medical or dietary advice</footer>
 
-  <script>
+<script>
     var SB_URL = 'https:' + '//wytulhgmvaeqnkvvhzxq.supabase.co';
     var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5dHVsaGdtdmFlcW5rdnZoenhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3OTA5MjgsImV4cCI6MjA5NzM2NjkyOH0.s-to8DfmqkZKDWU5hnNkJYiR-nZiBeX7-G-b2kWwKds';
     var supabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
     var currentUser = null;
 
-async function checkLogin(){
-  var result = await supabaseClient.auth.getUser();
-  if(!result.data.user){
-    window.location.href = 'login.html';
-  } else {
-    currentUser = result.data.user;
-    var profileResult = await supabaseClient.from('profiles').select('full_name, daily_fiber_goal').eq('id', currentUser.id).single();
-    var name = (profileResult.data && profileResult.data.full_name) || 'there';
-    document.getElementById('welcomeMsg').textContent = 'Welcome, ' + name + '!';
-
-    function getGoalLabel(goal){
-  if(goal === 25) return 'Recommended goal for women (25g)';
-  if(goal === 38) return 'Recommended goal for men (38g)';
-  return 'Your custom goal (' + goal + 'g)';
-}
-
-function updateProgressDisplay(totalG){
-    var goal = (profileResult.data && profileResult.data.daily_fiber_goal) || 28;
-    DAILY_VALUE_G = goal;
-    document.getElementById('goalDisplay').textContent = 'Daily Fiber Goal: ' + goal + 'g';
-    document.getElementById('dv-goal-label').textContent = getGoalLabel(goal);
-    loadTodayProgress();
-  }
-}
-checkLogin();
-
-async function loadTodayProgress(){
-  var startOfDay = new Date();
-  startOfDay.setHours(0,0,0,0);
-
-  var logsResult = await supabaseClient
-    .from('food_logs')
-    .select('fiber_grams')
-    .eq('user_id', currentUser.id)
-    .gte('logged_at', startOfDay.toISOString());
-
-  if(logsResult.error || !logsResult.data) return;
-
-  var todayTotal = 0;
-  logsResult.data.forEach(function(row){
-    todayTotal += parseFloat(row.fiber_grams) || 0;
-  });
-
-  updateProgressDisplay(todayTotal);
-}
-
-function updateProgressDisplay(totalG){
-  totalNumber.textContent = totalG.toFixed(1);
-  var pct = Math.round((totalG / DAILY_VALUE_G) * 100);
-  dvPct.textContent = pct + '%';
-  var fillPct = Math.min(pct, 100);
-  dvBar.style.width = fillPct + '%';
-  dvBar.classList.toggle('over', pct > 100);
-  dvBarTrack.setAttribute('aria-valuenow', fillPct);
-  results.classList.add('visible');
-}
-
-function openGoalEditor(){
-  var editor = document.getElementById('goalEditor');
-  editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
-}
-
-function updateGoalInput(){
-  var choice = document.querySelector('input[name="goalChoice"]:checked').value;
-  document.getElementById('customGoalInput').disabled = choice !== 'custom';
-}
-
-async function saveGoal(){
-  var choice = document.querySelector('input[name="goalChoice"]:checked');
-  if(!choice){ alert('Please select an option.'); return; }
-  var goalValue;
-  if(choice.value === 'custom'){
-    goalValue = parseInt(document.getElementById('customGoalInput').value);
-    if(!goalValue || goalValue < 1){ alert('Please enter a valid number.'); return; }
-  } else {
-    goalValue = parseInt(choice.value);
-  }
-
-  await supabaseClient.from('profiles').update({ daily_fiber_goal: goalValue }).eq('id', currentUser.id);
-  DAILY_VALUE_G = goalValue;
-  document.getElementById('goalDisplay').textContent = 'Daily Fiber Goal: ' + goalValue + 'g';
-  document.getElementById('dv-goal-label').textContent = getGoalLabel(goalValue);
-  document.getElementById('goalEditor').style.display = 'none';
-  loadTodayProgress();
-}
-
-async function logOut(){
-  await supabaseClient.auth.signOut();
-  window.location.href = 'login.html';
-}
     const btn = document.getElementById("analyze-btn");
     const textarea = document.getElementById("meals-input");
     const errorBox = document.getElementById("error-box");
@@ -568,6 +478,96 @@ async function logOut(){
     const disclaimerBox = document.getElementById("disclaimer-box");
 
     let DAILY_VALUE_G = 28;
+
+    async function checkLogin(){
+      var result = await supabaseClient.auth.getUser();
+      if(!result.data.user){
+        window.location.href = 'login.html';
+      } else {
+        currentUser = result.data.user;
+        var profileResult = await supabaseClient.from('profiles').select('full_name, daily_fiber_goal').eq('id', currentUser.id).single();
+        var name = (profileResult.data && profileResult.data.full_name) || 'there';
+        document.getElementById('welcomeMsg').textContent = 'Welcome, ' + name + '!';
+
+        var goal = (profileResult.data && profileResult.data.daily_fiber_goal) || 28;
+        DAILY_VALUE_G = goal;
+        document.getElementById('goalDisplay').textContent = 'Daily Fiber Goal: ' + goal + 'g';
+        document.getElementById('dv-goal-label').textContent = getGoalLabel(goal);
+        loadTodayProgress();
+      }
+    }
+    checkLogin();
+
+    function getGoalLabel(goal){
+      if(goal === 25) return 'Recommended goal for women (25g)';
+      if(goal === 38) return 'Recommended goal for men (38g)';
+      return 'Your custom goal (' + goal + 'g)';
+    }
+
+    async function loadTodayProgress(){
+      var startOfDay = new Date();
+      startOfDay.setHours(0,0,0,0);
+
+      var logsResult = await supabaseClient
+        .from('food_logs')
+        .select('fiber_grams')
+        .eq('user_id', currentUser.id)
+        .gte('logged_at', startOfDay.toISOString());
+
+      if(logsResult.error || !logsResult.data) return;
+
+      var todayTotal = 0;
+      logsResult.data.forEach(function(row){
+        todayTotal += parseFloat(row.fiber_grams) || 0;
+      });
+
+      updateProgressDisplay(todayTotal);
+    }
+
+    function updateProgressDisplay(totalG){
+      totalNumber.textContent = totalG.toFixed(1);
+      var pct = Math.round((totalG / DAILY_VALUE_G) * 100);
+      dvPct.textContent = pct + '%';
+      var fillPct = Math.min(pct, 100);
+      dvBar.style.width = fillPct + '%';
+      dvBar.classList.toggle('over', pct > 100);
+      dvBarTrack.setAttribute('aria-valuenow', fillPct);
+      results.classList.add('visible');
+    }
+
+    function openGoalEditor(){
+      var editor = document.getElementById('goalEditor');
+      editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function updateGoalInput(){
+      var choice = document.querySelector('input[name="goalChoice"]:checked').value;
+      document.getElementById('customGoalInput').disabled = choice !== 'custom';
+    }
+
+    async function saveGoal(){
+      var choice = document.querySelector('input[name="goalChoice"]:checked');
+      if(!choice){ alert('Please select an option.'); return; }
+      var goalValue;
+      if(choice.value === 'custom'){
+        goalValue = parseInt(document.getElementById('customGoalInput').value);
+        if(!goalValue || goalValue < 1){ alert('Please enter a valid number.'); return; }
+      } else {
+        goalValue = parseInt(choice.value);
+      }
+
+      await supabaseClient.from('profiles').update({ daily_fiber_goal: goalValue }).eq('id', currentUser.id);
+      DAILY_VALUE_G = goalValue;
+      document.getElementById('goalDisplay').textContent = 'Daily Fiber Goal: ' + goalValue + 'g';
+      document.getElementById('dv-goal-label').textContent = getGoalLabel(goalValue);
+      document.getElementById('goalEditor').style.display = 'none';
+      loadTodayProgress();
+    }
+
+    async function logOut(){
+      await supabaseClient.auth.signOut();
+      window.location.href = 'login.html';
+    }
 
     function setLoading(loading) {
       btn.disabled = loading;
@@ -585,7 +585,6 @@ async function logOut(){
     }
 
     function renderResults(data) {
-      // Clear old rows
       foodRows.innerHTML = "";
 
       data.items.forEach((item, i) => {
@@ -661,7 +660,7 @@ async function logOut(){
           return;
         }
 
-       renderResults(data);
+        renderResults(data);
         saveFoodLog(data);
         setTimeout(loadTodayProgress, 500);
       } catch (err) {
@@ -682,12 +681,11 @@ async function logOut(){
       }
     }
 
-    // Allow Ctrl+Enter / Cmd+Enter to submit
     textarea.addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
         btn.click();
       }
     });
-  </script>
+</script>
 </body>
 </html>
