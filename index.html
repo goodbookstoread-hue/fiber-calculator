@@ -476,9 +476,17 @@ async function checkLogin(){
     var name = (profileResult.data && profileResult.data.full_name) || 'there';
     document.getElementById('welcomeMsg').textContent = 'Welcome, ' + name + '!';
 
+    function getGoalLabel(goal){
+  if(goal === 25) return 'Recommended goal for women (25g)';
+  if(goal === 38) return 'Recommended goal for men (38g)';
+  return 'Your custom goal (' + goal + 'g)';
+}
+
+function updateProgressDisplay(totalG){
     var goal = (profileResult.data && profileResult.data.daily_fiber_goal) || 28;
     DAILY_VALUE_G = goal;
     document.getElementById('goalDisplay').textContent = 'Daily Fiber Goal: ' + goal + 'g';
+    document.getElementById('dv-goal-label').textContent = getGoalLabel(goal);
     loadTodayProgress();
   }
 }
