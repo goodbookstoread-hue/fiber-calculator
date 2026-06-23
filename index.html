@@ -539,6 +539,46 @@
       dvBar.classList.toggle('over', pct > 100);
       dvBarTrack.setAttribute('aria-valuenow', fillPct);
       results.classList.add('visible');
+
+      var remaining = DAILY_VALUE_G - totalG;
+      if(remaining > 1){
+        loadSuggestions(totalG, remaining);
+      } else {
+        document.getElementById('suggestionsSection').style.display = 'none';
+      }
+    }
+
+    async function loadSuggestions(consumedG, remainingG){
+      var section = document.getElementById('suggestionsSection');
+      var list = document.getElementById('suggestionsList');
+      section.style.display = 'block';
+      list.textContent = 'Loading suggestions...';
+
+      try {
+        const resp = await fetch('/api/suggestions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            remaining_g: Math.round(remainingG * 10) / 10,
+            goal_g: DAILY_VALUE_G,
+            consumed_g: Math.round(consumedG * 10) / 10
+          })
+        });
+        const data = await resp.json();
+        if(!resp.ok || !data.suggestions){
+          list.textContent = 'Unable to load suggestions right now.';
+          return;
+        }
+        var html = '';
+        data.suggestions.forEach(function(s){
+          html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e6c0;">' +
+            '<span>' + s.food + (s.note ? ' <span style="color:#999;font-size:12px;">— ' + s.note + '</span>' : '') + '</span>' +
+            '<span style="font-weight:600;color:#7a5c00;">+' + s.fiber_g.toFixed(1) + 'g</span></div>';
+        });
+        list.innerHTML = html;
+      } catch(err){
+        list.textContent = 'Unable to load suggestions right now.';
+      }
     }
 
     function openGoalEditor(){
