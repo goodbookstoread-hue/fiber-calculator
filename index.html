@@ -370,7 +370,26 @@
 <button onclick="logOut()" style="background:#fff;color:#b91c1c;border:1px solid #b91c1c;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;">Log Out</button>
 </div>
 </div>
-
+<div id="goalSection" style="max-width:600px;margin:0 auto 20px;padding:14px 20px;background:#f0f7f4;border-radius:8px;font-size:14px;">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+<span id="goalDisplay" style="color:#1b4332;font-weight:600;"></span>
+<button onclick="openGoalEditor()" id="editGoalBtn" style="background:none;border:1px solid #2d6a4f;color:#2d6a4f;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;">Edit Goal</button>
+</div>
+<div id="goalEditor" style="display:none;margin-top:12px;">
+<div style="margin-bottom:8px;">
+<label><input type="radio" name="goalChoice" value="25" onchange="updateGoalInput()"> Recommended for women (25g/day)</label>
+</div>
+<div style="margin-bottom:8px;">
+<label><input type="radio" name="goalChoice" value="38" onchange="updateGoalInput()"> Recommended for men (38g/day)</label>
+</div>
+<div style="margin-bottom:8px;">
+<label><input type="radio" name="goalChoice" value="custom" onchange="updateGoalInput()"> Custom goal:
+<input type="number" id="customGoalInput" min="1" max="100" style="width:60px;margin-left:6px;padding:4px;" disabled> g
+</label>
+</div>
+<button onclick="saveGoal()" style="background:#2d6a4f;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin-top:6px;">Save Goal</button>
+</div>
+</div>
   <header>
     <div class="logo-mark" aria-hidden="true">
       <!-- Wheat/plant icon -->
@@ -453,12 +472,43 @@ async function checkLogin(){
     window.location.href = 'login.html';
   } else {
     currentUser = result.data.user;
-    var profileResult = await supabaseClient.from('profiles').select('full_name').eq('id', currentUser.id).single();
+    var profileResult = await supabaseClient.from('profiles').select('full_name, daily_fiber_goal').eq('id', currentUser.id).single();
     var name = (profileResult.data && profileResult.data.full_name) || 'there';
     document.getElementById('welcomeMsg').textContent = 'Welcome, ' + name + '!';
+
+    var goal = (profileResult.data && profileResult.data.daily_fiber_goal) || 28;
+    DAILY_VALUE_G = goal;
+    document.getElementById('goalDisplay').textContent = 'Daily Fiber Goal: ' + goal + 'g';
   }
 }
 checkLogin();
+
+function openGoalEditor(){
+  var editor = document.getElementById('goalEditor');
+  editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+}
+
+function updateGoalInput(){
+  var choice = document.querySelector('input[name="goalChoice"]:checked').value;
+  document.getElementById('customGoalInput').disabled = choice !== 'custom';
+}
+
+async function saveGoal(){
+  var choice = document.querySelector('input[name="goalChoice"]:checked');
+  if(!choice){ alert('Please select an option.'); return; }
+  var goalValue;
+  if(choice.value === 'custom'){
+    goalValue = parseInt(document.getElementById('customGoalInput').value);
+    if(!goalValue || goalValue < 1){ alert('Please enter a valid number.'); return; }
+  } else {
+    goalValue = parseInt(choice.value);
+  }
+
+  await supabaseClient.from('profiles').update({ daily_fiber_goal: goalValue }).eq('id', currentUser.id);
+  DAILY_VALUE_G = goalValue;
+  document.getElementById('goalDisplay').textContent = 'Daily Fiber Goal: ' + goalValue + 'g';
+  document.getElementById('goalEditor').style.display = 'none';
+}
 
 async function logOut(){
   await supabaseClient.auth.signOut();
@@ -475,7 +525,7 @@ async function logOut(){
     const dvBarTrack = document.getElementById("dv-bar-track");
     const disclaimerBox = document.getElementById("disclaimer-box");
 
-    const DAILY_VALUE_G = 28;
+    let DAILY_VALUE_G = 28;
 
     function setLoading(loading) {
       btn.disabled = loading;
