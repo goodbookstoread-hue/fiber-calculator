@@ -16,23 +16,25 @@ export default async function handler(req, res) {
   const systemPrompt = `You are a nutrition expert specializing in dietary fiber. When given a description of foods, you estimate the dietary fiber content for each item. Always respond with valid JSON only — no markdown, no explanation, just the JSON object. Be realistic and use typical serving-size estimates when amounts are unspecified.`;
 
   const userPrompt = `Estimate the dietary fiber content for each food item in this meal description: "${meals}"
-
 Return a JSON object with this exact structure:
 {
   "items": [
-    { "food": "Food name with portion", "fiber_g": 2.5, "note": "brief source note" }
+    { "food": "Food name with portion", "fiber_g": 2.5, "soluble_g": 1.0, "insoluble_g": 1.5, "note": "brief source note" }
   ],
   "total_g": 8.5,
+  "total_soluble_g": 3.2,
+  "total_insoluble_g": 5.3,
   "disclaimer": "These are estimates based on typical values. Actual fiber content may vary by brand, ripeness, preparation method, and portion size."
 }
-
 Rules:
 - fiber_g should be a number (decimals allowed, one decimal place)
+- soluble_g and insoluble_g should add up to fiber_g (one decimal place each)
 - total_g is the sum of all fiber_g values, rounded to one decimal
+- total_soluble_g and total_insoluble_g are sums of the respective per-item values, rounded to one decimal
 - note should be very short (e.g. "whole grain", "fresh fruit", "refined flour")
-- If a food has negligible fiber (under 0.1g), set fiber_g to 0
+- If a food has negligible fiber (under 0.1g), set fiber_g, soluble_g, and insoluble_g to 0
 - Parse out individual foods even if listed together
-- Use realistic USDA-style estimates`;
+- Use realistic USDA-style estimates for soluble vs insoluble split (e.g. oats and apples are higher in soluble fiber; wheat bran and vegetable skins are higher in insoluble fiber)`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
