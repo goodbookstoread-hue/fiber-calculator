@@ -516,21 +516,25 @@
 
       var logsResult = await supabaseClient
         .from('food_logs')
-        .select('fiber_grams')
+        .select('fiber_grams, soluble_g, insoluble_g')
         .eq('user_id', currentUser.id)
         .gte('logged_at', startOfDay.toISOString());
 
       if(logsResult.error || !logsResult.data) return;
 
       var todayTotal = 0;
+      var todaySoluble = 0;
+      var todayInsoluble = 0;
       logsResult.data.forEach(function(row){
         todayTotal += parseFloat(row.fiber_grams) || 0;
+        todaySoluble += parseFloat(row.soluble_g) || 0;
+        todayInsoluble += parseFloat(row.insoluble_g) || 0;
       });
 
-      updateProgressDisplay(todayTotal);
+      updateProgressDisplay(todayTotal, todaySoluble, todayInsoluble);
     }
 
-    function updateProgressDisplay(totalG){
+    function updateProgressDisplay(totalG, solubleG, insolubleG){
       totalNumber.textContent = totalG.toFixed(1);
       var pct = Math.round((totalG / DAILY_VALUE_G) * 100);
       dvPct.textContent = pct + '%';
@@ -539,6 +543,20 @@
       dvBar.classList.toggle('over', pct > 100);
       dvBarTrack.setAttribute('aria-valuenow', fillPct);
       results.classList.add('visible');
+
+      if(typeof solubleG === "number" && typeof insolubleG === "number"){
+        let breakdownEl = document.getElementById("breakdown-summary");
+        if(!breakdownEl){
+          breakdownEl = document.createElement("div");
+          breakdownEl.id = "breakdown-summary";
+          breakdownEl.style.textAlign = "center";
+          breakdownEl.style.fontSize = "13px";
+          breakdownEl.style.color = "#666";
+          breakdownEl.style.marginTop = "4px";
+          totalNumber.parentElement.appendChild(breakdownEl);
+        }
+        breakdownEl.innerHTML = `Soluble: <strong style="color:#2d6a4f;">${solubleG.toFixed(1)}g</strong> &middot; Insoluble: <strong style="color:#2d6a4f;">${insolubleG.toFixed(1)}g</strong>`;
+      }
 
       var remaining = DAILY_VALUE_G - totalG;
       if(remaining > 1){
