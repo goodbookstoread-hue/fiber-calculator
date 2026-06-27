@@ -737,7 +737,9 @@
         await supabaseClient.from('food_logs').insert({
           user_id: currentUser.id,
           food_description: item.food,
-          fiber_grams: item.fiber_g
+          fiber_grams: item.fiber_g,
+          soluble_g: item.soluble_g || 0,
+          insoluble_g: item.insoluble_g || 0
         });
       }
     }
