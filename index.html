@@ -566,7 +566,7 @@
       }
     }
 
-    async function loadSuggestions(consumedG, remainingG){
+    async function loadSuggestions(consumedG, remainingG, solubleG, insolubleG){
       var section = document.getElementById('suggestionsSection');
       var list = document.getElementById('suggestionsList');
       section.style.display = 'block';
@@ -579,7 +579,9 @@
           body: JSON.stringify({
             remaining_g: Math.round(remainingG * 10) / 10,
             goal_g: DAILY_VALUE_G,
-            consumed_g: Math.round(consumedG * 10) / 10
+            consumed_g: Math.round(consumedG * 10) / 10,
+            soluble_consumed_g: typeof solubleG === "number" ? Math.round(solubleG * 10) / 10 : undefined,
+            insoluble_consumed_g: typeof insolubleG === "number" ? Math.round(insolubleG * 10) / 10 : undefined
           })
         });
         const data = await resp.json();
@@ -589,9 +591,12 @@
         }
         var html = '';
         data.suggestions.forEach(function(s){
-          html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e6c0;">' +
+          var typeNote = s.fiber_type_note ? '<div style="font-size:11px;color:#2d6a4f;font-weight:500;">' + s.fiber_type_note + '</div>' : '';
+          html += '<div style="padding:6px 0;border-bottom:1px solid #f0e6c0;">' +
+            '<div style="display:flex;justify-content:space-between;">' +
             '<span>' + s.food + (s.note ? ' <span style="color:#999;font-size:12px;">— ' + s.note + '</span>' : '') + '</span>' +
-            '<span style="font-weight:600;color:#7a5c00;">+' + s.fiber_g.toFixed(1) + 'g</span></div>';
+            '<span style="font-weight:600;color:#7a5c00;">+' + s.fiber_g.toFixed(1) + 'g</span></div>' +
+            typeNote + '</div>';
         });
         list.innerHTML = html;
       } catch(err){
