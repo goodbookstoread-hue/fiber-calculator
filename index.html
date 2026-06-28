@@ -560,7 +560,7 @@
 
       var remaining = DAILY_VALUE_G - totalG;
       if(remaining > 1){
-        loadSuggestions(totalG, remaining);
+        loadSuggestions(totalG, remaining, solubleG, insolubleG);
       } else {
         document.getElementById('suggestionsSection').style.display = 'none';
       }
