@@ -43,7 +43,7 @@ async function loadHistory(){
 
   var logsResult = await supabaseClient
     .from('food_logs')
-    .select('*')
+    .select('food_description, fiber_grams, soluble_g, insoluble_g, logged_at')
     .eq('user_id', userId)
     .order('logged_at', { ascending: false });
 
@@ -71,12 +71,24 @@ async function loadHistory(){
   Object.keys(grouped).forEach(function(day){
     var entries = grouped[day];
     var total = 0;
+    var totalSoluble = 0;
+    var totalInsoluble = 0;
     var itemsHtml = '';
     entries.forEach(function(e){
-      total += parseFloat(e.fiber_grams) || 0;
-      itemsHtml += '<div class="food-item"><span>' + e.food_description + '</span><span>' + parseFloat(e.fiber_grams).toFixed(1) + 'g</span></div>';
+      var fiber = parseFloat(e.fiber_grams) || 0;
+      var soluble = parseFloat(e.soluble_g) || 0;
+      var insoluble = parseFloat(e.insoluble_g) || 0;
+      total += fiber;
+      totalSoluble += soluble;
+      totalInsoluble += insoluble;
+      var breakdownLine = (soluble > 0 || insoluble > 0)
+        ? '<div style="font-size:11px;color:#999;">Soluble: ' + soluble.toFixed(1) + 'g &middot; Insoluble: ' + insoluble.toFixed(1) + 'g</div>'
+        : '';
+      itemsHtml += '<div class="food-item" style="flex-direction:column;align-items:flex-start;"><div style="display:flex;justify-content:space-between;width:100%;"><span>' + e.food_description + '</span><span>' + fiber.toFixed(1) + 'g</span></div>' + breakdownLine + '</div>';
     });
-    html += '<div class="day-group"><div class="day-header"><span>' + day + '</span></div>' + itemsHtml + '<div class="day-total">Total: ' + total.toFixed(1) + 'g fiber</div></div>';
+    html += '<div class="day-group"><div class="day-header"><span>' + day + '</span></div>' + itemsHtml +
+      '<div class="day-total">Total: ' + total.toFixed(1) + 'g fiber</div>' +
+      '<div style="text-align:right;font-size:12px;color:#888;">Soluble: ' + totalSoluble.toFixed(1) + 'g &middot; Insoluble: ' + totalInsoluble.toFixed(1) + 'g</div></div>';
   });
 
   container.innerHTML = html;
